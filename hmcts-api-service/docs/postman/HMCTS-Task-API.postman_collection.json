@@ -1,0 +1,362 @@
+{
+  "info": {
+    "name": "HMCTS API Service (Quickstart)",
+    "_postman_id": "b5d9f5a1-3b8f-4f3a-9a5d-demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Quickstart collection with tests for create/list/get/update/delete, idempotency (409), and RFC 7807 errors."
+  },
+  "item": [
+    {
+      "name": "Create task",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idemKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Pay fine\",\"description\":\"Court fee\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
+              "const loc = pm.response.headers.get('Location');",
+              "if (loc) {",
+              "  pm.collectionVariables.set('id', loc.split('/').pop());",
+              "  pm.collectionVariables.set('createdLocation', loc);",
+              "} else {",
+              "  const j = pm.response.json();",
+              "  if (j && j.id) pm.collectionVariables.set('id', j.id);",
+              "}",
+              "pm.test(\"Body has id\", function () {",
+              "  const id = pm.collectionVariables.get('id');",
+              "  pm.expect(id).to.be.a('string').and.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replay create (same Idempotency-Key) → 409",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idemKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Pay fine\",\"description\":\"Court fee\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 409 (duplicate idempotency)\", function () { pm.response.to.have.status(409); });",
+              "pm.test(\"problem+json\", function () {",
+              "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/problem+json');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get task",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks",
+            "{{id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "const j = pm.response.json();",
+              "pm.test(\"Has expected fields\", function () {",
+              "  pm.expect(j).to.have.property('id');",
+              "  pm.expect(j).to.have.property('title');",
+              "  pm.expect(j).to.have.property('status');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "List tasks by dueDate",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/tasks?sort=dueDate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks"
+          ],
+          "query": [
+            {
+              "key": "sort",
+              "value": "dueDate"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "const j = pm.response.json();",
+              "pm.test(\"Array of tasks\", function () { pm.expect(Array.isArray(j)).to.be.true; });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "List tasks by status",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/tasks?sort=status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks"
+          ],
+          "query": [
+            {
+              "key": "sort",
+              "value": "status"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "const j = pm.response.json();",
+              "pm.test(\"Array of tasks\", function () { pm.expect(Array.isArray(j)).to.be.true; });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update status → IN_PROGRESS",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\":\"IN_PROGRESS\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{id}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks",
+            "{{id}}",
+            "status"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Status changed to IN_PROGRESS\", function () {",
+              "  pm.expect(pm.response.json().status).to.eql('IN_PROGRESS');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation error (empty title) → 422",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 422\", function () { pm.response.to.have.status(422); });",
+              "pm.test(\"problem+json\", function () {",
+              "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/problem+json');",
+              "});",
+              "const j = pm.response.json();",
+              "pm.test(\"Has errors[]\", function () {",
+              "  pm.expect(j).to.have.property('errors');",
+              "  pm.expect(Array.isArray(j.errors)).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete task",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks",
+            "{{id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () { pm.response.to.have.status(204); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get deleted task → 404",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "tasks",
+            "{{id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+              "pm.test(\"problem+json\", function () {",
+              "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/problem+json');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "idemKey",
+      "value": "demo-1"
+    },
+    {
+      "key": "id",
+      "value": ""
+    }
+  ]
+}

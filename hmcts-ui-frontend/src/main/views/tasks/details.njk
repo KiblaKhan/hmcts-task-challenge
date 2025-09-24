@@ -1,0 +1,53 @@
+{% extends "layout.njk" %}
+
+{% block pageTitle %}Task details{% endblock %}
+
+{% block content %}
+<style>
+@media (max-width: 640px) {
+  .app-actions { display: grid; grid-template-columns: 1fr; grid-row-gap: 8px; }
+  .app-actions .govuk-button { width: 100%; margin-right: 0; }
+}
+</style>
+
+<div class="govuk-width-container">
+  <main class="govuk-main-wrapper" id="main-content" role="main">
+    <a href="{{ back or '/tasks' }}" class="govuk-back-link">Back</a>
+    <h1 class="govuk-heading-l">{{ task.title }}</h1>
+    <p class="govuk-body">{{ task.description or "No description" }}</p>
+    <p class="govuk-body">Due: {{ task.dueAt | fmtDate }}</p>
+
+    <p class="govuk-body">
+      Status:
+      {% if task.status == 'OPEN' %}
+        <strong class="govuk-tag govuk-tag--blue">Open</strong>
+      {% elif task.status == 'IN_PROGRESS' %}
+        <strong class="govuk-tag govuk-tag--yellow">In progress</strong>
+      {% else %}
+        <strong class="govuk-tag govuk-tag--green">Done</strong>
+      {% endif %}
+      {% if task._overdue %}<strong class="govuk-tag govuk-tag--red govuk-!-margin-left-2">Overdue</strong>{% endif %}
+      {% if task._dueToday %}<strong class="govuk-tag govuk-tag--orange govuk-!-margin-left-2">Due today</strong>{% endif %}
+    </p>
+
+    <div class="govuk-button-group app-actions">
+      {% if task.status == 'OPEN' %}
+        <form method="post" action="/tasks/{{ task.id }}/start">
+          {% if csrfToken %}<input type="hidden" name="_csrf" value="{{ csrfToken }}">{% endif %}
+          <button class="govuk-button" data-module="govuk-button" type="submit">Start</button>
+        </form>
+      {% endif %}
+      {% if task.status != 'DONE' %}
+        <form method="post" action="/tasks/{{ task.id }}/complete">
+          {% if csrfToken %}<input type="hidden" name="_csrf" value="{{ csrfToken }}">{% endif %}
+          <button class="govuk-button" data-module="govuk-button" type="submit">Complete</button>
+        </form>
+      {% endif %}
+      <form method="post" action="/tasks/{{ task.id }}/delete">
+        {% if csrfToken %}<input type="hidden" name="_csrf" value="{{ csrfToken }}">{% endif %}
+        <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Delete</button>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}

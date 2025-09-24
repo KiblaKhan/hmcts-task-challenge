@@ -1,0 +1,225 @@
+{% extends "layout.njk" %}
+{% block pageTitle %}Tasks{% endblock %}
+
+{% block content %}
+<style>
+@media (min-width: 641px) { .app-hide-desktop { display: none !important; } }
+@media (max-width: 640px) { .app-hide-mobile  { display: none !important; } }
+
+.app-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Compact filters row (Status | Sort) */
+.app-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-column-gap: 8px;
+  align-items: end;
+}
+.app-toolbar .govuk-select { min-width: unset; width: 100%; }
+.app-toolbar .govuk-label { margin-bottom: 4px; } /* tighten spacing on mobile */
+
+/* Mobile two-column cards */
+.app-task-card {
+  border: 1px solid #b1b4b6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-column-gap: 12px;
+  align-items: start;
+}
+.app-task-card h3 { margin: 0 0 6px 0; }
+.app-card-row { margin: 4px 0; }
+.app-tag { display: inline-block; margin-right: 6px; }
+
+/* Desktop button group wraps nicely */
+.govuk-button-group { flex-wrap: wrap; gap: 8px; }
+
+/* Mobile action bar: Apply grows, Calendar icon sits to the right */
+.app-actionbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-column-gap: 8px;
+  align-items: center;
+}
+.app-actionbar .govuk-button--primary,
+.app-actionbar button.govuk-button {
+  width: 100%;
+}
+
+/* Row: big Create button + tiny calendar icon */
+.app-createbar {
+  display: grid;
+  grid-template-columns: 1fr auto; /* button grows, icon stays tight */
+  column-gap: 8px;
+  align-items: center;
+}
+.app-createbar .govuk-button { width: 100%; }
+
+/* Icon-only calendar button */
+.app-icon-link {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 22px;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+.app-icon-link:focus {
+  outline: 3px solid #fd0;
+  box-shadow: 0 0 0 3px #0b0c0c;
+}
+.app-icon-btn {
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 10px; font-size: 22px; line-height: 1;
+}
+.app-icon-btn .app-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+</style>
+
+<div class="govuk-width-container">
+  <main class="govuk-main-wrapper" id="main-content" role="main">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">Tasks</h1>
+
+        <form method="get" class="govuk-form-group govuk-!-margin-bottom-4">
+          {# === Compact filters row (always two fields side-by-side) === #}
+          <div class="app-toolbar">
+            <div>
+              <label class="govuk-label govuk-!-margin-bottom-1" for="status">Status</label>
+              <select class="govuk-select" id="status" name="status">
+                <option value="" {% if not status %}selected{% endif %}>All</option>
+                <option value="OPEN" {% if status == 'OPEN' %}selected{% endif %}>Open</option>
+                <option value="IN_PROGRESS" {% if status == 'IN_PROGRESS' %}selected{% endif %}>In progress</option>
+                <option value="DONE" {% if status == 'DONE' %}selected{% endif %}>Done</option>
+              </select>
+            </div>
+            <div>
+              <label class="govuk-label govuk-!-margin-bottom-1" for="sort">Sort</label>
+              <select class="govuk-select" id="sort" name="sort">
+                <option value="dueDate" {% if sort == 'dueDate' %}selected{% endif %}>Due date</option>
+                <option value="status" {% if sort == 'status' %}selected{% endif %}>Status</option>
+              </select>
+            </div>
+          </div>
+
+          {# === Desktop/tablet buttons: Apply | Calendar view (text) | Create task === #}
+          <div class="govuk-button-group govuk-!-margin-top-3 app-hide-mobile">
+            <button type="submit" class="govuk-button" data-module="govuk-button">Apply</button>
+            <a href="/tasks/calendar{% if status %}?status={{ status }}{% endif %}"
+               class="govuk-button govuk-button--secondary" role="button" draggable="false" data-module="govuk-button">Calendar view</a>
+            <a href="/tasks/new"
+               class="govuk-button govuk-button--secondary" role="button" draggable="false" data-module="govuk-button">Create task</a>
+          </div>
+
+          {# === Mobile buttons: big Apply + compact Calendar icon on same row, Create below === #}
+          <div class="govuk-!-margin-top-3 app-hide-desktop">
+            <div class="app-actionbar">
+              <button type="submit" class="govuk-button" data-module="govuk-button">Apply</button>
+              
+            </div>
+            <div class="govuk-!-margin-top-2 app-createbar">
+              <a href="/tasks/new"
+                class="govuk-button govuk-button--secondary"
+                role="button" draggable="false" data-module="govuk-button">
+                Create task
+              </a>
+
+              <a href="/tasks/calendar{% if status %}?status={{ status }}{% endif %}"
+                class="app-icon-link"
+                title="Calendar view" aria-label="Calendar view">
+                📅
+              </a>
+            </div>
+          </div>
+        </form>
+
+        {# ----- Mobile two-column cards ----- #}
+        <div class="app-hide-desktop">
+          {% if tasks and (tasks | length) %}
+            {% for t in tasks %}
+              <div class="app-task-card">
+                <div>
+                  <h3 class="govuk-heading-s govuk-!-margin-bottom-1">
+                    <a href="/tasks/{{ t.id }}" class="govuk-link">{{ t.title }}</a>
+                  </h3>
+                  <div class="app-card-row govuk-hint">Due: {{ t.dueAt | fmtDate }}</div>
+                  <div class="app-card-row">
+                    {% if t.status == 'OPEN' %}
+                      <strong class="govuk-tag govuk-tag--blue app-tag">Open</strong>
+                    {% elif t.status == 'IN_PROGRESS' %}
+                      <strong class="govuk-tag govuk-tag--yellow app-tag">In progress</strong>
+                    {% else %}
+                      <strong class="govuk-tag govuk-tag--green app-tag">Done</strong>
+                    {% endif %}
+                    {% if t._overdue %}<strong class="govuk-tag govuk-tag--red app-tag">Overdue</strong>{% endif %}
+                    {% if t._dueToday %}<strong class="govuk-tag govuk-tag--orange app-tag">Today</strong>{% endif %}
+                  </div>
+                </div>
+                <div>
+                  <a href="/tasks/{{ t.id }}" class="govuk-button" data-module="govuk-button">View</a>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="govuk-body">No tasks found.</p>
+          {% endif %}
+        </div>
+
+        {# ----- Desktop table remains ----- #}
+        <div class="app-hide-mobile app-table-scroll">
+          {% if tasks and (tasks | length) %}
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th class="govuk-table__header">Title</th>
+                <th class="govuk-table__header">Status</th>
+                <th class="govuk-table__header">Due</th>
+                <th class="govuk-table__header">Flags</th>
+                <th class="govuk-table__header">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for t in tasks %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell"><a href="/tasks/{{ t.id }}" class="govuk-link">{{ t.title }}</a></td>
+                <td class="govuk-table__cell">
+                  {% if t.status == 'OPEN' %}
+                    <strong class="govuk-tag govuk-tag--blue">Open</strong>
+                  {% elif t.status == 'IN_PROGRESS' %}
+                    <strong class="govuk-tag govuk-tag--yellow">In progress</strong>
+                  {% else %}
+                    <strong class="govuk-tag govuk-tag--green">Done</strong>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ t.dueAt | fmtDate }}</td>
+                <td class="govuk-table__cell">
+                  {% if t._overdue %}<strong class="govuk-tag govuk-tag--red">Overdue</strong>{% endif %}
+                  {% if t._dueToday %}<strong class="govuk-tag govuk-tag--orange">Due today</strong>{% endif %}
+                </td>
+                <td class="govuk-table__cell">
+                  <a href="/tasks/{{ t.id }}" class="govuk-link">View</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p class="govuk-body">No tasks found.</p>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

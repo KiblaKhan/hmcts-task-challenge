@@ -1,0 +1,20 @@
+# Java / Maven
+target/
+*.log
+
+# Node
+node_modules/
+.pnp.cjs
+.pnp.loader.mjs
+
+# Coverage / build
+coverage/
+dist/
+build/
+reports/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

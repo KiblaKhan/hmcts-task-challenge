@@ -1,0 +1,59 @@
+// Optional: move inline page styles here and import from main.scss
+// Add to the bottom of src/main/assets/scss/main.scss:
+//   @import 'responsive';
+
+@media (min-width: 641px) {
+  .app-hide-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-hide-mobile {
+    display: none !important;
+  }
+}
+
+.app-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-task-card {
+  border: 1px solid #b1b4b6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.app-card-row {
+  margin: 4px 0;
+}
+
+.app-tag {
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.app-day {
+  border: 1px solid #b1b4b6;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.app-day__date {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.app-day__task {
+  margin: 4px 0;
+}
+
+.govuk-button-group {
+  flex-wrap: wrap;
+  gap: 8px;
+}

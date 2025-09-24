@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hmcts-api-service
+  labels: { app: hmcts-api-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: hmcts-api-service }
+  template:
+    metadata:
+      labels: { app: hmcts-api-service }
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [{ containerPort: 8080 }]
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
+            - name: idempotency.backend
+              value: "{{ .Values.env.idempotency.backend }}"
+            - name: redis.url
+              value: "{{ .Values.env.redis.url }}"

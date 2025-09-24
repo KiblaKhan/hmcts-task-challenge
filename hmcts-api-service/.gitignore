@@ -1,0 +1,89 @@
+# -------------------------
+# OS / editors
+# -------------------------
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# -------------------------
+# Java / Spring Boot (all modules)
+# -------------------------
+**/target/
+**/build/
+**/.gradle/
+**/out/
+logs/
+**/logs/
+
+# Maven (keep wrapper files tracked!)
+.mvn/timing.properties
+# DO NOT ignore: .mvn/wrapper/** and mvnw / mvnw.cmd
+
+# Gradle (keep wrapper files tracked!)
+.gradle/
+# DO NOT ignore: gradle/wrapper/** and gradlew / gradlew.bat
+
+# Test reports & coverage
+**/surefire-reports/
+**/failsafe-reports/
+**/jacoco.exec
+**/jacoco/
+**/test-results/
+**/reports/
+
+# -------------------------
+# Node / frontend (if you use /web)
+# -------------------------
+web/node_modules/
+web/.pnpm-store/
+web/.cache/
+web/dist/
+web/build/
+web/.next/
+web/.turbo/
+web/.parcel-cache/
+web/.eslintcache
+
+# -------------------------
+# Env / secrets (root and submodules)
+# -------------------------
+.env
+.env.*
+**/*.env
+**/*.env.*
+*.local
+
+# -------------------------
+# Docker / Compose
+# -------------------------
+docker-compose.override.yml
+**/.docker/
+**/docker-data/
+
+# -------------------------
+# Helm
+# -------------------------
+**/*.tgz         # packaged charts
+helm/**/charts/  # vendored subcharts if pulled locally
+
+# -------------------------
+# Terraform (keep lock file, ignore state/secrets)
+# -------------------------
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/*.auto.tfvars
+crash.log
+
+# -------------------------
+# Postman (keep collections; ignore local envs)
+# -------------------------
+**/*.postman_environment.json

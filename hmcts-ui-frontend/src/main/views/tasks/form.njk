@@ -1,0 +1,49 @@
+{% extends "layout.njk" %}
+
+{% block pageTitle %}Create task{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l">Create a task</h1>
+
+    {% set showSummary = (errors and (errors.title or errors.global)) %}
+    {% if showSummary %}
+      <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1" data-module="govuk-error-summary">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% if errors.title %}<li><a href="#title">{{ errors.title }}</a></li>{% endif %}
+            {% if errors.global %}<li>{{ errors.global }}</li>{% endif %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" action="/tasks" novalidate>
+      <div class="govuk-form-group {% if errors and errors.title %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="title">Title</label>
+        {% if errors and errors.title %}
+          <p id="title-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span> {{ errors.title }}
+          </p>
+        {% endif %}
+        <input class="govuk-input" id="title" name="title" type="text" value="{{ values.title }}">
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="description">Description (optional)</label>
+        <textarea class="govuk-textarea" id="description" name="description" rows="5">{{ values.description }}</textarea>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="dueAt">Due at (ISO 8601, e.g. 2025-09-30T17:00:00Z)</label>
+        <input class="govuk-input" id="dueAt" name="dueAt" type="text" value="{{ values.dueAt }}">
+      </div>
+
+      <button class="govuk-button" data-module="govuk-button" type="submit">Create task</button>
+      <a href="/tasks" class="govuk-link govuk-link--no-visited-state">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

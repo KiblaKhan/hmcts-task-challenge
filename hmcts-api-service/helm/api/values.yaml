@@ -1,0 +1,13 @@
+image:
+  repository: ghcr.io/your-org/hmcts-api-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+env:
+  SPRING_PROFILES_ACTIVE: postgres
+  idempotency.backend: redis
+  redis.url: redis://redis:6379

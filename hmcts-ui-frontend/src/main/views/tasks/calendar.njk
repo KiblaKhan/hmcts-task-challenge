@@ -1,0 +1,298 @@
+{% extends "layout.njk" %}
+{% block pageTitle %}Tasks calendar{% endblock %}
+
+{% block content %}
+<style>
+@media (min-width: 641px) { .app-hide-desktop { display: none !important; } }
+@media (max-width: 640px) { .app-hide-mobile  { display: none !important; } }
+
+/* ----- calendar container & grid ----- */
+.app-cal-wrap {
+  position: relative;           /* overlay anchored here */
+  overflow-x: auto;             /* horizontal scroll if needed */
+  overflow-y: hidden;           /* keeps overlay inside */
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+.app-cal-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.app-cal-head .app-cal-colhead { text-align: left; font-weight: 700; color: #505a5f; }
+
+.app-cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.app-day {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #b1b4b6;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+.app-day--muted { background: #f3f2f1; opacity: .7; }
+.app-day__num { font-weight: 700; font-size: 14px; line-height: 1; color: #0b0c0c; }
+
+.app-dots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+
+/* task “dots” */
+.app-dot-btn {
+  appearance: none; -webkit-appearance: none;
+  border: 0; padding: 0;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #b1b4b6;
+  cursor: pointer;
+  z-index: 5;
+  position: relative;
+  --tip-gap: 8px;      /* space between dot and tooltip */
+  --arrow-gap: 2px;    /* space between dot and arrow */
+  --arrow-size: 6px;   /* triangle size */
+}
+
+.app-dot-btn::after {
+  content: attr(data-title) " (" attr(data-status) ")";
+  position: absolute;
+  left: 50%;
+   bottom: calc(100% + var(--tip-gap));  /* <— close to the circle */
+  transform: translateX(-10%);
+  background: #0b0c0c;         /* GOV.UK black */
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 240px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+.app-dot-btn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--arrow-gap));
+  transform: translateX(-10%);
+  border: 6px solid transparent;
+  border-top-color: #0b0c0c;   /* little arrow */
+  opacity: 0;
+  transition: opacity .12s ease-in-out;
+}
+.app-dot-btn:hover { background: #7d7d7d; }
+.app-dot-btn:focus { outline: 3px solid #fd0; box-shadow: 0 0 0 3px #0b0c0c; }
+.app-dot-btn:hover::after,
+.app-dot-btn:hover::before {
+  opacity: 1;
+}
+/* While modal is open, never show any tooltips */
+.has-modal .app-dot-btn::after,
+.has-modal .app-dot-btn::before {
+  display: none !important;
+}
+.app-dot-btn[aria-expanded="true"] { background: #505a5f; }
+
+/* centered overlay card */
+.app-cal-overlay {
+  position: absolute; inset: 0;
+  display: none; align-items: center; justify-content: center;
+  z-index: 50; pointer-events: none;
+}
+.app-cal-overlay.is-open { display: flex; pointer-events: auto; }
+.app-popcard {
+  background: #fff; border: 1px solid #b1b4b6; border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+  padding: 16px; width: min(90%, 360px); max-height: 80%; overflow: auto; position: relative;
+}
+.app-popcard__close {
+  position: absolute; top: 8px; right: 8px;
+  background: transparent; border: 0; color: #1d70b8; text-decoration: underline; cursor: pointer;
+}
+.app-popcard__tags .govuk-tag { margin-right: 6px; }
+
+/* mobile list cards (unchanged) */
+.app-card {
+  border: 1px solid #b1b4b6; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;
+  display: grid; grid-template-columns: 1fr auto; grid-column-gap: 12px; align-items: start;
+}
+.app-card h3 { margin: 0 0 6px 0; }
+.app-meta { margin: 4px 0; }
+.app-meta .govuk-tag { margin-right: 6px; }
+</style>
+
+<div class="govuk-width-container">
+  <main class="govuk-main-wrapper" id="main-content" role="main">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">Tasks calendar</h1>
+
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/tasks/calendar?month={{ prevMonth }}{% if status %}&status={{status}}{% endif %}">&laquo; {{ prevMonth }}</a>
+          <a class="govuk-button" href="/tasks/calendar?month={{ nextMonth }}{% if status %}&status={{status}}{% endif %}">{{ nextMonth }} &raquo;</a>
+          <a class="govuk-button govuk-button--secondary" href="/tasks{% if status %}?status={{status}}{% endif %}">List view</a>
+        </div>
+
+        <h2 class="govuk-heading-m">{{ monthLabel }}</h2>
+
+        {# ----- MOBILE: compact month list ----- #}
+        <div class="app-hide-desktop">
+          {% if monthTasks and (monthTasks | length) %}
+            {% for t in monthTasks %}
+              <div class="app-card">
+                <div>
+                  <h3 class="govuk-heading-s govuk-!-margin-bottom-1">
+                    <a href="/tasks/{{ t.id }}" class="govuk-link">{{ t.title }}</a>
+                  </h3>
+                  <div class="app-meta govuk-hint">Due: {{ t.dueAt | fmtDate }}</div>
+                  <div class="app-meta">
+                    {% if t.status == 'OPEN' %}
+                      <strong class="govuk-tag govuk-tag--blue">Open</strong>
+                    {% elif t.status == 'IN_PROGRESS' %}
+                      <strong class="govuk-tag govuk-tag--yellow">In progress</strong>
+                    {% else %}
+                      <strong class="govuk-tag govuk-tag--green">Done</strong>
+                    {% endif %}
+                    {% if t._overdue %}<strong class="govuk-tag govuk-tag--red">Overdue</strong>{% endif %}
+                    {% if t._dueToday %}<strong class="govuk-tag govuk-tag--orange">Today</strong>{% endif %}
+                  </div>
+                </div>
+                <div><a href="/tasks/{{ t.id }}" class="govuk-button" data-module="govuk-button">View</a></div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="govuk-body">No tasks due this month.</p>
+          {% endif %}
+        </div>
+
+        {# ----- DESKTOP/TABLET: grid calendar + centered overlay ----- #}
+        <div class="app-hide-mobile app-cal-wrap" id="app-cal-wrap">
+          <div class="app-cal-head">
+            <div class="app-cal-colhead">Mon</div>
+            <div class="app-cal-colhead">Tue</div>
+            <div class="app-cal-colhead">Wed</div>
+            <div class="app-cal-colhead">Thu</div>
+            <div class="app-cal-colhead">Fri</div>
+            <div class="app-cal-colhead">Sat</div>
+            <div class="app-cal-colhead">Sun</div>
+          </div>
+          <div class="app-cal">
+            {% for w in [0,1,2,3,4,5] %}
+              {% for d in [0,1,2,3,4,5,6] %}
+                {% set idx = (w*7)+d %}
+                {% set cell = days[idx] %}
+                {% set list = (byDate[cell.date] | default([])) %}
+                <div class="app-day{% if not cell.inMonth %} app-day--muted{% endif %}">
+                  <div class="app-day__num">{{ cell.day }}</div>
+                  <div class="app-dots">
+                    {% for t in list %}
+                      <button type="button"
+                              class="app-dot-btn"
+                              aria-label="{{ t.title }}"
+                              aria-expanded="false"
+                              data-id="{{ t.id }}"
+                              data-title="{{ t.title }}"
+                              data-due="{{ t.dueAt | fmtDate }}"
+                              data-status="{{ t.status }}"
+                              data-overdue="{{ '1' if t._overdue else '0' }}"
+                              data-today="{{ '1' if t._dueToday else '0' }}">
+                      </button>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+
+          <div class="app-cal-overlay" id="app-cal-overlay" role="dialog" aria-modal="true" aria-labelledby="app-popcard-title">
+            <div class="app-popcard" role="document">
+              <button class="app-popcard__close" type="button" aria-label="Close">Close</button>
+              <h4 id="app-popcard-title" class="govuk-heading-s govuk-!-margin-bottom-1">Task</h4>
+              <p class="govuk-hint govuk-!-margin-bottom-2">Due: <span data-field="due">—</span></p>
+              <div class="app-popcard__tags govuk-!-margin-bottom-3"></div>
+              <div><a href="#" class="govuk-button govuk-button--secondary" data-field="viewLink">View</a></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+  var wrap = document.getElementById('app-cal-wrap');
+  if (!wrap) return;
+
+  var overlay = document.getElementById('app-cal-overlay');
+  var closeBtn = overlay.querySelector('.app-popcard__close');
+  var titleEl = overlay.querySelector('#app-popcard-title');
+  var dueEl = overlay.querySelector('[data-field="due"]');
+  var viewLink = overlay.querySelector('[data-field="viewLink"]');
+  var tagsEl = overlay.querySelector('.app-popcard__tags');
+
+  var lastTrigger = null;
+
+  function mkTag(text, cls) {
+    var el = document.createElement('strong');
+    el.className = 'govuk-tag ' + cls;
+    el.textContent = text;
+    return el;
+  }
+
+  function openCard(btn) {
+    lastTrigger = btn;
+    titleEl.textContent = btn.getAttribute('data-title') || 'Task';
+    dueEl.textContent = btn.getAttribute('data-due') || '—';
+    var id = btn.getAttribute('data-id');
+    var status = btn.getAttribute('data-status');
+    var overdue = btn.getAttribute('data-overdue') === '1';
+    var today = btn.getAttribute('data-today') === '1';
+    viewLink.href = '/tasks/' + encodeURIComponent(id);
+
+    tagsEl.innerHTML = '';
+    if (status === 'OPEN') tagsEl.appendChild(mkTag('Open', 'govuk-tag--blue'));
+    else if (status === 'IN_PROGRESS') tagsEl.appendChild(mkTag('In progress', 'govuk-tag--yellow'));
+    else tagsEl.appendChild(mkTag('Done', 'govuk-tag--green'));
+    if (overdue) tagsEl.appendChild(mkTag('Overdue', 'govuk-tag--red'));
+    if (today) tagsEl.appendChild(mkTag('Today', 'govuk-tag--orange'));
+
+    overlay.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    closeBtn.focus();
+    document.addEventListener('keydown', escHandler);
+  }
+
+  function closeCard() {
+    overlay.classList.remove('is-open');
+    if (lastTrigger) {
+      lastTrigger.setAttribute('aria-expanded', 'false');
+      lastTrigger.focus();
+      lastTrigger = null;
+    }
+    document.removeEventListener('keydown', escHandler);
+  }
+
+  function escHandler(e) { if (e.key === 'Escape') closeCard(); }
+
+  wrap.addEventListener('click', function(e) {
+    var t = e.target;
+    if (t && t.closest) {
+      var btn = t.closest('.app-dot-btn');
+      if (btn) { e.preventDefault(); openCard(btn); }
+    }
+  });
+  closeBtn.addEventListener('click', closeCard);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeCard(); });
+})();
+</script>
+{% endblock %}
