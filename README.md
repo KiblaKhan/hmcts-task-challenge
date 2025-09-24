@@ -2,8 +2,8 @@
 
 This repository contains my submission for the [HMCTS Developer Challenge](https://github.com/hmcts/dts-developer-challenge).  
 It demonstrates the design and implementation of a full-stack solution using **Java/Spring Boot** for the backend and **TypeScript/Node.js** for the frontend, following modern engineering practices around testing, CI/CD, containerisation, and accessibility.  See README for backend and frontend for more details:
-- [API Service Readme](hmcts-api-service\README.md)
-- [UI Frontend Readme](hmcts-ui-frontend\README.md)
+- [API Service Readme](hmcts-api-service/README.md)
+- [UI Frontend Readme](hmcts-ui-frontend/README.md)
 ---
 
 ## 📂 Project Structure
