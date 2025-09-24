@@ -27,20 +27,22 @@ It demonstrates the design and implementation of a full-stack solution using **J
 Users can navigate between Mobile and Tablet/Landscape UI by resizing the view or browser:
 
 - **UI Pages**
-  ![Mobile Tasks page](docs/screenshots/MobileTasks.jpg)
-  ![Tablet Tasks page](docs/screenshots/TabletTasks.jpg)
+- Mobile \
+ ![Mobile Tasks page](docs/screenshots/MobileTasks.jpg) \
+ ![Mobile Calender page](docs/screenshots/MobileCalendar.jpg) \
 
-  ![Mobile Calendar page](docs/screenshots/MobileCalendar.jpg)
-  ![Tablet Calendar page](docs/screenshots/TabletCalendar.jpg)
+- Tablet \
+ ![Tablet Tasks page](docs/screenshots/TabletTasks.jpg) \
+ ![Tablet Calender page](docs/screenshots/TabletCalendar.jpg) \
 
-- **API Swagger/OpenAPI Docs**  
-  ![API Docs Screenshot](docs/screenshots/api-swagger.jpg)
+- **API Swagger/OpenAPI Docs**  \
+ ![API Docs Screenshot](docs/screenshots/api-swagger.jpg) \
 
 - **Test Results**  
-  ![Test Results UI Frontend](docs/screenshots/ui-jest.jpg)
-  ![Test Results API Services](docs/screenshots/api-services.jpg)
-
-*(Screenshots to be added after running locally.)*
+- UI Test Result \
+ ![Test Results UI Frontend](docs/screenshots/ui-jest.jpg) \
+- API Test Result \
+ ![Test Results API Services](docs/screenshots/api-services.jpg) \
 
 ---
 
