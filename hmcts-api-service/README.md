@@ -120,7 +120,7 @@ See [`api/src/main/resources/application.yml`](api/src/main/resources/applicatio
 
 ### Postman
 
-- See [`docs/postman` Postman collection available for import.
+- See [`docs/postman`](./docs/postman) Postman collection available for import.
 
 ### Defaults
 
