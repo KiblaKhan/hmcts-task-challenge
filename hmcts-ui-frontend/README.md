@@ -3,7 +3,7 @@
 A frontend for the HMCTS task challenge, built on top of
 [`hmcts-dev-test-frontend`](https://github.com/hmcts/hmcts-dev-test-frontend). It provides a
 task list, detail pages, creation flow, and a responsive calendar view. It integrates with the
-Spring Boot API (`hmcts-api-service/api` in the HMCTS Challenge repository) and keeps the
+Spring Boot API [`hmcts-api-service/api`](./../hmcts-api-service/api) in the HMCTS Challenge repository) and keeps the
 GOV.UK Design System look and feel.  Note: tested on Windows 11 only.
 
 > **Highlights**
